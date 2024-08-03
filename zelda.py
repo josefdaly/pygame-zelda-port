@@ -15,11 +15,15 @@ player_files = (
     'assets/link_up1.png',
     'assets/link_up2.png',
 )
+horizantal_flip_files = (
+    'assets/link_left1.png',
+    'assets/link_left2.png',
+)
 TILE_WIDTH = 16
 TILE_HEIGHT = 16
 ROOM_WIDTH = 16
 ROOM_HEIGHT = 11
-FPS = 30
+FPS = 60
 
 class Game:
     W = 256
@@ -42,6 +46,7 @@ class Game:
         self.tilemap = Tilemap(self.tileset, size=(ROOM_HEIGHT, ROOM_WIDTH))
         self.player = Player(
             player_files,
+            horizantal_flip_files,
             starting_loc=find_map_tile_location(117, ROOM_WIDTH, TILE_HEIGHT, TILE_WIDTH)
         )
         self.sprite_list = pygame.sprite.Group()
@@ -66,13 +71,14 @@ class Game:
                         print(self.player.dir, self.player.velocity)
             self.player.update_player_location()
             self.update_display()
+            self.clock.tick(FPS)
         pygame.quit()
 
     def update_display(self):
         self.screen.blit(self.tilemap.image, (0,0))
         self.sprite_list.draw(self.screen)
         pygame.display.update()
-        self.clock.tick(FPS)
+
 
 game = Game()
 game.run()

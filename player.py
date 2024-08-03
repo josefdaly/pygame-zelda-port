@@ -3,11 +3,18 @@ import pygame
 
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, files, speed=1, starting_loc=(0, 0)):
+    def __init__(self, files, horizantal_flip_files, speed=1.8, starting_loc=(0, 0)):
         pygame.sprite.Sprite.__init__(self)
         self.images = []
         for file in files:
             self.images.append(pygame.image.load(file).convert_alpha())
+        for file in horizantal_flip_files:
+            self.images.append(pygame.transform.flip(
+                pygame.image.load(file).convert_alpha(),
+                True,
+                False,
+            ))
+
         self.image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.y = starting_loc[0]
@@ -15,15 +22,42 @@ class Player(pygame.sprite.Sprite):
         self.speed = speed
         self.velocity = (0, 0)
         self.dir = (0, 0)
+        self.is_moving = False
+        self.last_time = pygame.time.get_ticks()
+        self.time_frame = 200 #ms
+        self.walking_frame = 0
+        self.DIR_TO_IMAGES_MAP = {
+            (0, -1): (self.images[4], self.images[5]),
+            (0, 1): (self.images[0], self.images[1]),
+            (-1, 0): (self.images[2], self.images[3]),
+            (1, 0): (self.images[6], self.images[7]),
+        }
+
+    def flip_walking_frame(self):
+        self.walking_frame = (self.walking_frame + 1) % 2
+
+    def set_walking_image(self):
+        self.image = self.DIR_TO_IMAGES_MAP[self.dir][self.walking_frame]
 
     def set_velocity(self, dir):
+        self.is_moving = True
         self.velocity = (self.speed*dir[0], self.speed*dir[1])
         self.dir = dir
 
     def stop(self, dir):
         if dir == self.dir:
+            self.is_moving = False
             self.dir = (0, 0)
             self.velocity = (0, 0)
 
+    def time_frame_has_passed(self):
+        if self.last_time + self.time_frame < pygame.time.get_ticks():
+            self.last_time = pygame.time.get_ticks()
+            return True
+
     def update_player_location(self):
-        self.rect.move_ip(self.velocity)
+        if self.is_moving:
+            self.rect.move_ip(self.velocity)
+            if self.time_frame_has_passed():
+                self.flip_walking_frame()
+            self.set_walking_image()
