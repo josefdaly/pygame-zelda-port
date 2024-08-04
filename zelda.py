@@ -4,7 +4,7 @@ from tileset import Tileset
 from tilemap import Tilemap
 from player import Player
 from utils import find_map_tile_location
-from levels.overworld import STARTING_ROOM
+from levels.overworld import STARTING_ROOM, COLLISION_TILES
 
 overworld_tile_file = 'assets/overworldtiles.png'
 player_files = (
@@ -55,7 +55,7 @@ class Game:
         self.running = True
 
     def run(self):
-        self.tilemap.set_room(STARTING_ROOM)
+        self.tilemap.set_room(STARTING_ROOM, COLLISION_TILES)
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -69,7 +69,8 @@ class Game:
                         dir = self.DIR_MAP[event.key]
                         self.player.stop(dir)
                         print(self.player.dir, self.player.velocity)
-            self.player.update_player_location()
+            if self.player.should_be_moving(self.tilemap.tile_rects):
+                self.player.update_player_location()
             self.update_display()
             self.clock.tick(FPS)
         pygame.quit()

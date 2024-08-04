@@ -4,7 +4,7 @@ import pygame
 class Player(pygame.sprite.Sprite):
 
     def __init__(self, files, horizantal_flip_files, speed=1.8, starting_loc=(0, 0)):
-        pygame.sprite.Sprite.__init__(self)
+        super().__init__()
         self.images = []
         for file in files:
             self.images.append(pygame.image.load(file).convert_alpha())
@@ -20,8 +20,8 @@ class Player(pygame.sprite.Sprite):
         self.rect.y = starting_loc[0]
         self.rect.x = starting_loc[1]
         self.wall_collision_rect = pygame.Rect(
-            starting_loc[0] - (self.rect.height/2),
             starting_loc[1],
+            starting_loc[0] + (self.rect.height/2),
             self.rect.width,
             self.rect.height/2,
         )
@@ -50,6 +50,13 @@ class Player(pygame.sprite.Sprite):
         self.velocity = (self.speed*dir[0], self.speed*dir[1])
         self.dir = dir
 
+    def should_be_moving(self, tile_rects):
+        if self.is_moving:
+            test_rect = self.wall_collision_rect.move(self.velocity)
+            if not test_rect.collidelistall(tile_rects):
+                return True
+        return False
+
     def stop(self, dir):
         if dir == self.dir:
             self.is_moving = False
@@ -64,6 +71,7 @@ class Player(pygame.sprite.Sprite):
     def update_player_location(self):
         if self.is_moving:
             self.rect.move_ip(self.velocity)
+            self.wall_collision_rect.move_ip(self.velocity)
             if self.time_frame_has_passed():
                 self.flip_walking_frame()
             self.set_walking_image()
