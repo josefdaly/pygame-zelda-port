@@ -136,7 +136,7 @@ class Game:
     def update_display(self):
         self.screen.blit(self.tilemap.image, self.tilemap_loc)
         if self.next_tilemap:
-            self.screen.blit(self.tilemap.image, self.next_tilemap_loc)
+            self.screen.blit(self.next_tilemap.image, self.next_tilemap_loc)
         self.sprite_list.draw(self.screen)
         pygame.display.update()
 
