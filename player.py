@@ -39,6 +39,16 @@ class Player(pygame.sprite.Sprite):
             (1, 0): (self.images[6], self.images[7]),
         }
 
+    def is_walking_over_edge(self, bottom, right):
+        if self.rect.centerx < 0:
+            return True
+        if self.rect.centery < 0:
+            return True
+        if self.rect.centerx > right:
+            return True
+        if self.rect.centery > bottom:
+            return True
+
     def flip_walking_frame(self):
         self.walking_frame = (self.walking_frame + 1) % 2
 
@@ -68,10 +78,13 @@ class Player(pygame.sprite.Sprite):
             self.last_time = pygame.time.get_ticks()
             return True
 
+    def move(self, velocity):
+        self.rect.move_ip(velocity)
+        self.wall_collision_rect.move_ip(velocity)
+
     def update_player_location(self):
         if self.is_moving:
-            self.rect.move_ip(self.velocity)
-            self.wall_collision_rect.move_ip(self.velocity)
+            self.move(self.velocity)
             if self.time_frame_has_passed():
                 self.flip_walking_frame()
             self.set_walking_image()

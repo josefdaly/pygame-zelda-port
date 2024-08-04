@@ -4,7 +4,7 @@ from tileset import Tileset
 from tilemap import Tilemap
 from player import Player
 from utils import find_map_tile_location
-from levels.overworld import STARTING_ROOM, COLLISION_TILES
+from levels.overworld import STARTING_ROOM, COLLISION_TILES, ROOM_MATRIX
 
 overworld_tile_file = 'assets/overworldtiles.png'
 player_files = (
@@ -29,13 +29,20 @@ class Game:
     W = 256
     H = 240
     SIZE = W, H
-
+    ROOM_HEIGHT_PIXELS = ROOM_HEIGHT * TILE_HEIGHT
+    ROOM_WIDTH_PIXELS = ROOM_WIDTH * TILE_WIDTH
     PLAYER_MOVEMENT_KEYS = (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT)
+
+    DIR_UP = (0, -1)
+    DIR_DOWN = (0, 1)
+    DIR_LEFT = (-1, 0)
+    DIR_RIGHT = (1, 0)
+
     DIR_MAP = {
-        pygame.K_UP: (0, -1),
-        pygame.K_DOWN: (0, 1),
-        pygame.K_LEFT: (-1, 0),
-        pygame.K_RIGHT: (1, 0),
+        pygame.K_UP: DIR_UP,
+        pygame.K_DOWN: DIR_DOWN,
+        pygame.K_LEFT: DIR_LEFT,
+        pygame.K_RIGHT: DIR_RIGHT,
     }
 
     def __init__(self):
@@ -44,6 +51,8 @@ class Game:
         pygame.display.set_caption("Zelda")
         self.tileset = Tileset(overworld_tile_file, size=(TILE_HEIGHT, TILE_WIDTH))
         self.tilemap = Tilemap(self.tileset, size=(ROOM_HEIGHT, ROOM_WIDTH))
+        self.next_tilemap = None
+        self.next_tilemap_loc = None
         self.player = Player(
             player_files,
             horizantal_flip_files,
@@ -53,9 +62,28 @@ class Game:
         self.sprite_list.add(self.player)
         self.clock = pygame.time.Clock()
         self.running = True
+        self.changing_rooms = False
+        self.tilemap_velocity = (0, 0)
+        self.tilemap_loc = (0 ,0)
+        self.current_room = (7, 7)
+
+    def move_tilemap(self):
+        if self.changing_rooms:
+            self.tilemap_loc = (
+                self.tilemap_loc[0] + self.tilemap_velocity[0],
+                self.tilemap_loc[1] + self.tilemap_velocity[1],
+            )
+            self.next_tilemap_loc = (
+                self.next_tilemap_loc[0] + self.tilemap_velocity[0],
+                self.next_tilemap_loc[1] + self.tilemap_velocity[1],
+            )
+            self.player.move(self.tilemap_velocity)
 
     def run(self):
-        self.tilemap.set_room(STARTING_ROOM, COLLISION_TILES)
+        self.tilemap.set_room(
+            ROOM_MATRIX[self.current_room[0]][self.current_room[1]],
+            COLLISION_TILES
+        )
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -64,19 +92,51 @@ class Game:
                     if event.key in self.PLAYER_MOVEMENT_KEYS:
                         dir = self.DIR_MAP[event.key]
                         self.player.set_velocity(dir)
+                    if event.key == pygame.K_a:
+                        self.changing_rooms = True
+                        self.tilemap_velocity = (-1, 0)
                 elif event.type == pygame.KEYUP:
                     if event.key in self.PLAYER_MOVEMENT_KEYS:
                         dir = self.DIR_MAP[event.key]
                         self.player.stop(dir)
-                        print(self.player.dir, self.player.velocity)
-            if self.player.should_be_moving(self.tilemap.tile_rects):
+
+            if not self.changing_rooms and self.player.should_be_moving(self.tilemap.tile_rects):
                 self.player.update_player_location()
+
+            if self.player.is_walking_over_edge(self.ROOM_HEIGHT_PIXELS, self.ROOM_WIDTH_PIXELS):
+                if not self.changing_rooms:
+                    self.tilemap_velocity = (self.player.dir[0] * -1, self.player.dir[1] * -1)
+                    self.next_tilemap = Tilemap(self.tileset, size=(ROOM_HEIGHT, ROOM_WIDTH))
+                    self.current_room = (
+                        self.current_room[0] + self.player.dir[1],
+                        self.current_room[1] + self.player.dir[0],
+                    )
+                    self.next_tilemap.set_room(
+                        ROOM_MATRIX[self.current_room[0]][self.current_room[1]],
+                        COLLISION_TILES
+                    )
+                    self.next_tilemap_loc = (self.ROOM_WIDTH_PIXELS * self.player.dir[0], self.ROOM_HEIGHT_PIXELS * self.player.dir[1])
+                self.changing_rooms = True
+
+            if self.next_tilemap and self.changing_rooms == True:
+                if self.next_tilemap_loc == (0, 0):
+                    self.player.move(self.player.velocity)
+                    self.changing_rooms = False
+                    self.tilemap = self.next_tilemap
+                    self.tilemap_loc = (0, 0)
+                    self.next_tilemap = None
+                    self.next_tilemap_loc = None
+                    self.tilemap_velocity = (0, 0)
+
+            self.move_tilemap()
             self.update_display()
             self.clock.tick(FPS)
         pygame.quit()
 
     def update_display(self):
-        self.screen.blit(self.tilemap.image, (0,0))
+        self.screen.blit(self.tilemap.image, self.tilemap_loc)
+        if self.next_tilemap:
+            self.screen.blit(self.tilemap.image, self.next_tilemap_loc)
         self.sprite_list.draw(self.screen)
         pygame.display.update()
 
