@@ -19,6 +19,12 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.y = starting_loc[0]
         self.rect.x = starting_loc[1]
+        self.wall_collision_rect = pygame.Rect(
+            starting_loc[0] - (self.rect.height/2),
+            starting_loc[1],
+            self.rect.width,
+            self.rect.height/2,
+        )
         self.speed = speed
         self.velocity = (0, 0)
         self.dir = (0, 0)

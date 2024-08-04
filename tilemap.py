@@ -3,17 +3,14 @@ from numpy import zeros, array, random
 
 
 class Tilemap:
-    def __init__(self, tileset, size, rect=None):
+    def __init__(self, tileset, size):
         self.size = size
         self.tileset = tileset
         self.map = zeros(size, dtype=int)
 
         h, w = self.size
         self.image = pygame.Surface((16*w, 16*h))
-        if rect:
-            self.rect = pygame.Rect(rect)
-        else:
-            self.rect = self.image.get_rect()
+        self.rect = self.image.get_rect()
 
     def render(self):
         m, n = self.map.shape
