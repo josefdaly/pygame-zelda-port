@@ -9,11 +9,14 @@ def find_map_tile_location(n, columns, tile_height, tile_width):
     return y, x
 
 
-def parse_overworld_data(file):
+def parse_overworld_data(file, split=None):
     matrix = []
     with open(file) as f:
         for line in f.readlines():
-            matrix.append(line.strip().split(' '))
+            if not split:
+                matrix.append(list(line.strip()))
+            else:
+                matrix.append(line.strip().split(split))
     return numpy.array(matrix)
 
 

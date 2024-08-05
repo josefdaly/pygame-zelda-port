@@ -22,7 +22,7 @@ class Tilemap:
                 if convert_tile_reference:
                     tile_no = convert_tile_reference(tile_no)
                 tile = self.tileset.tiles[tile_no]
-                if collision_tile_map.get(tile.number):
+                if collision_tile_map[i, j] == 'X':
                     tile_rect = tile.get_rect()
                     tiles.append(tile_rect)
                     tile_rect.y = i*16
@@ -33,8 +33,6 @@ class Tilemap:
 
     def set_room(self, room, collision_tile_map, convert_tile_reference=None):
         self.map = array(room)
-        print(self.map)
-        print(self.map.shape)
         self.create_and_render_room(collision_tile_map, convert_tile_reference)
 
     def __str__(self):

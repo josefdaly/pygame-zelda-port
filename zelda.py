@@ -67,7 +67,12 @@ class Game:
         self.tilemap_loc = (0 ,0)
         self.current_room = (7, 7)
         self.overworld_rooms = blockshaped(
-            parse_overworld_data('assets/nes_zelda_overworld_tile_map.txt'),
+            parse_overworld_data('assets/nes_zelda_overworld_tile_map.txt', ' '),
+            ROOM_HEIGHT,
+            ROOM_WIDTH,
+        )
+        self.overworld_rooms_collision_data = blockshaped(
+            parse_overworld_data('assets/nes_zelda_overworld_blocking_map.txt'),
             ROOM_HEIGHT,
             ROOM_WIDTH,
         )
@@ -87,7 +92,7 @@ class Game:
     def run(self):
         self.tilemap.set_room(
             self.overworld_rooms[self.current_room[0] * 16 + self.current_room[1]],
-            COLLISION_TILES,
+            self.overworld_rooms_collision_data[self.current_room[0] * 16 + self.current_room[1]],
             convert_tile_reference=hex_reference_to_integer,
         )
         while self.running:
@@ -119,7 +124,7 @@ class Game:
                     )
                     self.next_tilemap.set_room(
                         self.overworld_rooms[self.current_room[0] * 16 + self.current_room[1]],
-                        COLLISION_TILES,
+                        self.overworld_rooms_collision_data[self.current_room[0] * 16 + self.current_room[1]],
                         convert_tile_reference=hex_reference_to_integer,
                     )
                     self.next_tilemap_loc = (self.ROOM_WIDTH_PIXELS * self.player.dir[0], self.ROOM_HEIGHT_PIXELS * self.player.dir[1])
