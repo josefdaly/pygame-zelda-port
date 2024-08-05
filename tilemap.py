@@ -13,12 +13,15 @@ class Tilemap:
         self.image = pygame.Surface((16*w, 16*h))
         self.rect = self.image.get_rect()
 
-    def create_and_render_room(self, collision_tile_map):
+    def create_and_render_room(self, collision_tile_map, convert_tile_reference=None):
         m, n = self.map.shape
         tiles = []
         for i in range(m):
             for j in range(n):
-                tile = self.tileset.tiles[self.map[i, j]]
+                tile_no = self.map[i, j]
+                if convert_tile_reference:
+                    tile_no = convert_tile_reference(tile_no)
+                tile = self.tileset.tiles[tile_no]
                 if collision_tile_map.get(tile.number):
                     tile_rect = tile.get_rect()
                     tiles.append(tile_rect)
@@ -28,11 +31,11 @@ class Tilemap:
                 self.image.blit(tile, (j*16, i*16))
         self.tile_rects = tiles
 
-    def set_room(self, room, collision_tile_map):
+    def set_room(self, room, collision_tile_map, convert_tile_reference=None):
         self.map = array(room)
         print(self.map)
         print(self.map.shape)
-        self.create_and_render_room(collision_tile_map)
+        self.create_and_render_room(collision_tile_map, convert_tile_reference)
 
     def __str__(self):
         return f'{self.__class__.__name__} {self.size}'

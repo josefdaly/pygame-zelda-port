@@ -3,7 +3,7 @@ import pygame
 from tileset import Tileset
 from tilemap import Tilemap
 from player import Player
-from utils import find_map_tile_location
+from utils import find_map_tile_location, parse_overworld_data, blockshaped, hex_reference_to_integer
 from levels.overworld import STARTING_ROOM, COLLISION_TILES, ROOM_MATRIX
 
 overworld_tile_file = 'assets/overworldtiles.png'
@@ -27,7 +27,7 @@ FPS = 60
 
 class Game:
     W = 256
-    H = 240
+    H = 176
     SIZE = W, H
     ROOM_HEIGHT_PIXELS = ROOM_HEIGHT * TILE_HEIGHT
     ROOM_WIDTH_PIXELS = ROOM_WIDTH * TILE_WIDTH
@@ -66,6 +66,11 @@ class Game:
         self.tilemap_velocity = (0, 0)
         self.tilemap_loc = (0 ,0)
         self.current_room = (7, 7)
+        self.overworld_rooms = blockshaped(
+            parse_overworld_data('assets/nes_zelda_overworld_tile_map.txt'),
+            ROOM_HEIGHT,
+            ROOM_WIDTH,
+        )
 
     def move_tilemap(self):
         if self.changing_rooms:
@@ -81,8 +86,9 @@ class Game:
 
     def run(self):
         self.tilemap.set_room(
-            ROOM_MATRIX[self.current_room[0]][self.current_room[1]],
-            COLLISION_TILES
+            self.overworld_rooms[self.current_room[0] * 16 + self.current_room[1]],
+            COLLISION_TILES,
+            convert_tile_reference=hex_reference_to_integer,
         )
         while self.running:
             for event in pygame.event.get():
@@ -112,8 +118,9 @@ class Game:
                         self.current_room[1] + self.player.dir[0],
                     )
                     self.next_tilemap.set_room(
-                        ROOM_MATRIX[self.current_room[0]][self.current_room[1]],
-                        COLLISION_TILES
+                        self.overworld_rooms[self.current_room[0] * 16 + self.current_room[1]],
+                        COLLISION_TILES,
+                        convert_tile_reference=hex_reference_to_integer,
                     )
                     self.next_tilemap_loc = (self.ROOM_WIDTH_PIXELS * self.player.dir[0], self.ROOM_HEIGHT_PIXELS * self.player.dir[1])
                 self.changing_rooms = True
