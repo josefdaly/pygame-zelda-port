@@ -11,3 +11,14 @@ This project is a python/pygame port of the original Legend of Zelda.
 - Link cannot pass through solid objects
 - The entire overworld is rendered and traverseable
 - Sliding room to room transitions
+
+### To Run in Dev Environment
+
+In project directory
+  ```bash
+  python -m venv env
+  source env/bin/activate
+  pip install -r requirements.txt
+  python zelda.py
+  ```
+  
