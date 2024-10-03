@@ -93,19 +93,15 @@ class Game:
             )
             self.player.move(self.tilemap_velocity)
 
-    def render_maptiles_to_screen(self, maptiles):
-        for maptile in maptiles:
-            self.tilemap.render_maptile(self.screen, maptile)
-
     def handle_player_movement(self):
         if not self.changing_rooms and self.player.should_be_moving(self.tilemap.collision_rects):
-            rects_to_render_indices = self.player.collision_rects(self.tilemap.all_rects) # collect all recs previous player location stood over
+            previous_loc_rect = self.player.rect.copy()
             self.player.update_player_location()
-            self.render_maptiles_to_screen([
-                self.tilemap.get_maptile_by_rect(self.tilemap.all_rects[idx])
-                for idx in rects_to_render_indices
-            ])
-
+            self.screen.blit(
+                self.tilemap.image,
+                dest=(previous_loc_rect.x, previous_loc_rect.y),
+                area=previous_loc_rect
+            )
 
     def handle_room_change_state(self):
         if self.player.is_walking_over_edge(self.ROOM_HEIGHT_PIXELS, self.ROOM_WIDTH_PIXELS):
