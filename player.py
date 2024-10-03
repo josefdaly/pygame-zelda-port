@@ -60,9 +60,6 @@ class Player(pygame.sprite.Sprite):
         self.velocity = (self.speed*dir[0], self.speed*dir[1])
         self.dir = dir
 
-    def collision_rects(self, rects):
-        return self.rect.collidelistall(rects)
-
     def should_be_moving(self, tile_rects):
         if self.is_moving:
             test_rect = self.wall_collision_rect.move(self.velocity)
