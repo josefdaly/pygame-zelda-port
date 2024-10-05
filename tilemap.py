@@ -34,7 +34,7 @@ class Tilemap:
                 tile = self.tileset.tiles[tile_no]
                 if collision_tile_map[i, j] == 'X':
                     tile_rect = tile.get_rect()
-                    tile_rect.y = i*self.game.TILE_HEIGHT
+                    tile_rect.y = i*self.game.TILE_HEIGHT + self.game.MAIN_TILE_MAP_LOC[1]
                     tile_rect.x = j*self.game.TILE_WIDTH
                     self.collision_rects.append(tile_rect)
                 self.image.blit(tile, (j*self.game.TILE_WIDTH, i*self.game.TILE_HEIGHT))

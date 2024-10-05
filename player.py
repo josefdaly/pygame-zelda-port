@@ -3,7 +3,7 @@ import pygame
 
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, files, horizantal_flip_files, speed=1.8, starting_loc=(0, 0)):
+    def __init__(self, game, files, horizantal_flip_files, speed=1.8, starting_loc=(0, 0)):
         super().__init__()
         self.images = []
         for file in files:
@@ -14,7 +14,7 @@ class Player(pygame.sprite.Sprite):
                 True,
                 False,
             ))
-
+        self.game = game
         self.image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.y = starting_loc[0]
@@ -39,10 +39,10 @@ class Player(pygame.sprite.Sprite):
             (1, 0): (self.images[6], self.images[7]),
         }
 
-    def is_walking_over_edge(self, bottom, right):
-        if self.rect.centerx < 0:
+    def is_walking_over_edge(self, bottom, right, top, left):
+        if self.rect.centerx < left:
             return True
-        if self.rect.centery < 0:
+        if self.rect.centery < top:
             return True
         if self.rect.centerx > right:
             return True
