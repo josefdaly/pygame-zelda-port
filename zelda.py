@@ -104,7 +104,6 @@ class Game:
                 STARTING_TILE, ROOM_WIDTH, self.TILE_HEIGHT, self.TILE_WIDTH
             ),
         )
-        self.player_previous_rect: pygame.Rect | None = None
         self.sprite_list = pygame.sprite.Group()
         self.sprite_list.add(self.player)
         self.clock = pygame.time.Clock()
@@ -144,9 +143,7 @@ class Game:
         if not self.changing_rooms and self.player.should_be_moving(
             self.tilemap.collision_rects
         ):
-            self.player_previous_rect = self.player.rect.copy()
             self.player.update_player_location()
-            self.render_over_player_previous_position()
 
     def handle_room_change_state(self) -> None:
         if self.player.is_walking_over_edge(
@@ -216,18 +213,6 @@ class Game:
         if self.next_tilemap and self.next_tilemap_loc:
             self.screen.blit(self.next_tilemap.image, self.next_tilemap_loc)
 
-    def render_over_player_previous_position(self) -> None:
-        if self.player_previous_rect:
-            self.player_previous_rect.y += self.MAIN_TILE_MAP_OFFSET
-            self.screen.blit(
-                self.tilemap.image,
-                dest=(
-                    self.player_previous_rect.x,
-                    self.player_previous_rect.y - self.MAIN_TILE_MAP_OFFSET,
-                ),
-                area=self.player_previous_rect,
-            )
-
     def run(self) -> None:
         room_index = self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
         self.tilemap.set_room(
@@ -260,8 +245,8 @@ class Game:
         pygame.quit()
 
     def update_display(self) -> None:
+        self.render_tilemap()
         if self.next_tilemap:
-            self.render_tilemap()
             self.render_next_tilemap()
             self.render_info_screen()
         self.sprite_list.draw(self.screen)
