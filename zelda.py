@@ -14,7 +14,6 @@ from utils import (
     blockshaped,
     hex_reference_to_integer_from_int,
 )
-import numpy.typing as npt
 
 
 overworld_tile_file = "assets/overworldtiles.png"
@@ -143,7 +142,7 @@ class Game:
         if not self.changing_rooms and self.player.should_be_moving(
             self.tilemap.collision_rects
         ):
-            self.player.update_player_location()
+            self.player.update()
 
     def handle_room_change_state(self) -> None:
         if self.player.is_walking_over_edge(

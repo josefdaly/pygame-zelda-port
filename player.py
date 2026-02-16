@@ -43,7 +43,7 @@ class Player(pygame.sprite.Sprite):
         )
         self.speed = speed
         self.velocity: tuple[float, float] = (0.0, 0.0)
-        self.dir: tuple[int, int] = (0, 0)
+        self.dir: tuple[int, int] = (0, 1)
         self.is_moving = False
         self.last_time = pygame.time.get_ticks()
         self.time_frame = 200  # ms
@@ -108,7 +108,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.move_ip(velocity)
         self.wall_collision_rect.move_ip(velocity)
 
-    def update_player_location(self) -> None:
+    def update(self) -> None:
         if self.is_moving:
             self.move(self.velocity)
             if self.time_frame_has_passed():
