@@ -1,8 +1,8 @@
 import math
 import numpy
 
-def find_map_tile_location(n, columns, tile_height, tile_width):
 
+def find_map_tile_location(n, columns, tile_height, tile_width):
     x = (n % columns) * tile_width
     y = math.floor(n / columns) * tile_height
 
@@ -31,11 +31,19 @@ def blockshaped(arr, nrows, ncols):
     h, w = arr.shape
     assert h % nrows == 0, f"{h} rows is not evenly divisible by {nrows}"
     assert w % ncols == 0, f"{w} cols is not evenly divisible by {ncols}"
-    return (arr.reshape(h//nrows, nrows, -1, ncols)
-               .swapaxes(1,2)
-               .reshape(-1, nrows, ncols))
+    return (
+        arr.reshape(h // nrows, nrows, -1, ncols)
+        .swapaxes(1, 2)
+        .reshape(-1, nrows, ncols)
+    )
+
+
+TILESET_COLS = 20
+TILESET_ROW_STRIDE = 18
 
 
 def hex_reference_to_integer(hex):
     i = int(hex, 16)
-    return int(((i - (i % 20))/20 * 18) + (i % 20))
+    row = i // TILESET_COLS
+    col = i % TILESET_COLS
+    return row * TILESET_ROW_STRIDE + col

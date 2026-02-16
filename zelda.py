@@ -26,6 +26,8 @@ horizantal_flip_files = (
 overworld_music_file = "assets/overworld.mp3"
 ROOM_WIDTH = 16
 ROOM_HEIGHT = 11
+OVERWORLD_COLS = 16
+STARTING_TILE = 117
 FPS = 60
 
 
@@ -89,7 +91,7 @@ class Game:
             player_files,
             horizantal_flip_files,
             starting_loc=find_map_tile_location(
-                117, ROOM_WIDTH, self.TILE_HEIGHT, self.TILE_WIDTH
+                STARTING_TILE, ROOM_WIDTH, self.TILE_HEIGHT, self.TILE_WIDTH
             ),
         )
         self.player_previous_rect = None
@@ -158,10 +160,10 @@ class Game:
                 )
                 self.next_tilemap.set_room(
                     self.overworld_rooms[
-                        self.current_room[0] * 16 + self.current_room[1]
+                        self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
                     ],
                     self.overworld_rooms_collision_data[
-                        self.current_room[0] * 16 + self.current_room[1]
+                        self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
                     ],
                     convert_tile_reference=hex_reference_to_integer,
                 )
@@ -206,9 +208,11 @@ class Game:
 
     def run(self):
         self.tilemap.set_room(
-            self.overworld_rooms[self.current_room[0] * 16 + self.current_room[1]],
+            self.overworld_rooms[
+                self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
+            ],
             self.overworld_rooms_collision_data[
-                self.current_room[0] * 16 + self.current_room[1]
+                self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
             ],
             convert_tile_reference=hex_reference_to_integer,
         )
