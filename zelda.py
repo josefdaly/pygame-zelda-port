@@ -9,7 +9,6 @@ from utils import (
     blockshaped,
     hex_reference_to_integer,
 )
-from levels.overworld import STARTING_ROOM, COLLISION_TILES, ROOM_MATRIX
 
 overworld_tile_file = "assets/overworldtiles.png"
 player_files = (
