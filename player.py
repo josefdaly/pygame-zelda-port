@@ -2,35 +2,35 @@ import pygame
 
 
 class Player(pygame.sprite.Sprite):
-
-    def __init__(self, game, files, horizantal_flip_files, speed=1.8, starting_loc=(0, 0)):
+    def __init__(self, files, horizantal_flip_files, speed=1.8, starting_loc=(0, 0)):
         super().__init__()
         self.images = []
         for file in files:
             self.images.append(pygame.image.load(file).convert_alpha())
         for file in horizantal_flip_files:
-            self.images.append(pygame.transform.flip(
-                pygame.image.load(file).convert_alpha(),
-                True,
-                False,
-            ))
-        self.game = game
+            self.images.append(
+                pygame.transform.flip(
+                    pygame.image.load(file).convert_alpha(),
+                    True,
+                    False,
+                )
+            )
         self.image = self.images[0]
         self.rect = self.image.get_rect()
         self.rect.y = starting_loc[0]
         self.rect.x = starting_loc[1]
         self.wall_collision_rect = pygame.Rect(
             starting_loc[1] + 2,
-            starting_loc[0] + (self.rect.height/2),
+            starting_loc[0] + (self.rect.height / 2),
             self.rect.width - 4,
-            self.rect.height/2,
+            self.rect.height / 2,
         )
         self.speed = speed
         self.velocity = (0, 0)
         self.dir = (0, 0)
         self.is_moving = False
         self.last_time = pygame.time.get_ticks()
-        self.time_frame = 200 #ms
+        self.time_frame = 200  # ms
         self.walking_frame = 0
         self.DIR_TO_IMAGES_MAP = {
             (0, -1): (self.images[4], self.images[5]),
@@ -57,7 +57,7 @@ class Player(pygame.sprite.Sprite):
 
     def set_velocity(self, dir):
         self.is_moving = True
-        self.velocity = (self.speed*dir[0], self.speed*dir[1])
+        self.velocity = (self.speed * dir[0], self.speed * dir[1])
         self.dir = dir
 
     def should_be_moving(self, tile_rects):
