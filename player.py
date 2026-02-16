@@ -15,22 +15,21 @@ class Player(pygame.sprite.Sprite):
     ) -> None:
         super().__init__()
         self.images: list[pygame.Surface] = []
+        loaded_images: dict[str, pygame.Surface] = {}
 
         for file in files:
             if not os.path.exists(file):
                 raise FileNotFoundError(f"Player sprite file not found: {file}")
-            self.images.append(pygame.image.load(file).convert_alpha())
+            if file not in loaded_images:
+                loaded_images[file] = pygame.image.load(file).convert_alpha()
+            self.images.append(loaded_images[file])
 
         for file in horizantal_flip_files:
             if not os.path.exists(file):
                 raise FileNotFoundError(f"Player sprite file not found: {file}")
-            self.images.append(
-                pygame.transform.flip(
-                    pygame.image.load(file).convert_alpha(),
-                    True,
-                    False,
-                )
-            )
+            if file not in loaded_images:
+                loaded_images[file] = pygame.image.load(file).convert_alpha()
+            self.images.append(pygame.transform.flip(loaded_images[file], True, False))
 
         self.image = self.images[0]
         self.rect = self.image.get_rect()
