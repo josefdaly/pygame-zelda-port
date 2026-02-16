@@ -1,4 +1,9 @@
+from __future__ import annotations
+
+import os
+
 import pygame
+import pygame.sprite
 
 from tileset import Tileset
 from tilemap import Tilemap
@@ -7,11 +12,13 @@ from utils import (
     find_map_tile_location,
     parse_overworld_data,
     blockshaped,
-    hex_reference_to_integer,
+    hex_reference_to_integer_from_int,
 )
+import numpy.typing as npt
+
 
 overworld_tile_file = "assets/overworldtiles.png"
-player_files = (
+player_files: tuple[str, ...] = (
     "assets/link_down1.png",
     "assets/link_down2.png",
     "assets/link_left1.png",
@@ -19,7 +26,7 @@ player_files = (
     "assets/link_up1.png",
     "assets/link_up2.png",
 )
-horizantal_flip_files = (
+horizantal_flip_files: tuple[str, ...] = (
     "assets/link_left1.png",
     "assets/link_left2.png",
 )
@@ -54,19 +61,22 @@ class Game:
     ROOM_WIDTH_PIXELS = ROOM_WIDTH * TILE_WIDTH
     PLAYER_MOVEMENT_KEYS = (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT)
 
-    DIR_UP = (0, -1)
-    DIR_DOWN = (0, 1)
-    DIR_LEFT = (-1, 0)
-    DIR_RIGHT = (1, 0)
+    DIR_UP: tuple[int, int] = (0, -1)
+    DIR_DOWN: tuple[int, int] = (0, 1)
+    DIR_LEFT: tuple[int, int] = (-1, 0)
+    DIR_RIGHT: tuple[int, int] = (1, 0)
 
-    DIR_MAP = {
+    DIR_MAP: dict[int, tuple[int, int]] = {
         pygame.K_UP: DIR_UP,
         pygame.K_DOWN: DIR_DOWN,
         pygame.K_LEFT: DIR_LEFT,
         pygame.K_RIGHT: DIR_RIGHT,
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
+        if not os.path.exists(overworld_tile_file):
+            raise FileNotFoundError(f"Tileset not found: {overworld_tile_file}")
+
         pygame.init()
         self.screen = pygame.display.set_mode(
             (self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.SCALED
@@ -85,8 +95,8 @@ class Game:
             tile_height=self.TILE_HEIGHT,
             map_offset=self.MAIN_TILE_MAP_OFFSET,
         )
-        self.next_tilemap = None
-        self.next_tilemap_loc = None
+        self.next_tilemap: Tilemap | None = None
+        self.next_tilemap_loc: tuple[int, int] | None = None
         self.player = Player(
             player_files,
             horizantal_flip_files,
@@ -94,15 +104,15 @@ class Game:
                 STARTING_TILE, ROOM_WIDTH, self.TILE_HEIGHT, self.TILE_WIDTH
             ),
         )
-        self.player_previous_rect = None
+        self.player_previous_rect: pygame.Rect | None = None
         self.sprite_list = pygame.sprite.Group()
         self.sprite_list.add(self.player)
         self.clock = pygame.time.Clock()
         self.running = True
         self.changing_rooms = False
-        self.tilemap_velocity = (0, 0)
-        self.tilemap_loc = self.MAIN_TILE_MAP_LOC
-        self.current_room = (7, 7)
+        self.tilemap_velocity: tuple[int, int] = (0, 0)
+        self.tilemap_loc: tuple[int, int] = self.MAIN_TILE_MAP_LOC
+        self.current_room: tuple[int, int] = (7, 7)
         self.overworld_rooms = blockshaped(
             parse_overworld_data("assets/nes_zelda_overworld_tile_map.txt", " "),
             ROOM_HEIGHT,
@@ -113,21 +123,24 @@ class Game:
             ROOM_HEIGHT,
             ROOM_WIDTH,
         )
-        pygame.mixer.music.load(overworld_music_file)
 
-    def move_tilemap(self):
+        if os.path.exists(overworld_music_file):
+            pygame.mixer.music.load(overworld_music_file)
+
+    def move_tilemap(self) -> None:
         if self.changing_rooms:
             self.tilemap_loc = (
                 self.tilemap_loc[0] + self.tilemap_velocity[0],
                 self.tilemap_loc[1] + self.tilemap_velocity[1],
             )
-            self.next_tilemap_loc = (
-                self.next_tilemap_loc[0] + self.tilemap_velocity[0],
-                self.next_tilemap_loc[1] + self.tilemap_velocity[1],
-            )
+            if self.next_tilemap_loc:
+                self.next_tilemap_loc = (
+                    self.next_tilemap_loc[0] + self.tilemap_velocity[0],
+                    self.next_tilemap_loc[1] + self.tilemap_velocity[1],
+                )
             self.player.move(self.tilemap_velocity)
 
-    def handle_player_movement(self):
+    def handle_player_movement(self) -> None:
         if not self.changing_rooms and self.player.should_be_moving(
             self.tilemap.collision_rects
         ):
@@ -135,7 +148,7 @@ class Game:
             self.player.update_player_location()
             self.render_over_player_previous_position()
 
-    def handle_room_change_state(self):
+    def handle_room_change_state(self) -> None:
         if self.player.is_walking_over_edge(
             self.ROOM_HEIGHT_PIXELS + self.MAIN_TILE_MAP_OFFSET,
             self.ROOM_WIDTH_PIXELS,
@@ -154,18 +167,27 @@ class Game:
                     tile_height=self.TILE_HEIGHT,
                     map_offset=self.MAIN_TILE_MAP_OFFSET,
                 )
-                self.current_room = (
-                    self.current_room[0] + self.player.dir[1],
-                    self.current_room[1] + self.player.dir[0],
+
+                new_room_row = self.current_room[0] + self.player.dir[1]
+                new_room_col = self.current_room[1] + self.player.dir[0]
+
+                if (
+                    new_room_row < 0
+                    or new_room_row >= len(self.overworld_rooms) // OVERWORLD_COLS
+                ):
+                    self.changing_rooms = False
+                    self.next_tilemap = None
+                    return
+
+                self.current_room = (new_room_row, new_room_col)
+
+                room_index = (
+                    self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
                 )
                 self.next_tilemap.set_room(
-                    self.overworld_rooms[
-                        self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
-                    ],
-                    self.overworld_rooms_collision_data[
-                        self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
-                    ],
-                    convert_tile_reference=hex_reference_to_integer,
+                    self.overworld_rooms[room_index],
+                    self.overworld_rooms_collision_data[room_index],
+                    convert_tile_reference=hex_reference_to_integer_from_int,
                 )
                 self.next_tilemap_loc = (
                     self.ROOM_WIDTH_PIXELS * self.player.dir[0],
@@ -174,7 +196,7 @@ class Game:
                 )
             self.changing_rooms = True
 
-        if self.next_tilemap and self.changing_rooms == True:
+        if self.next_tilemap and self.changing_rooms:
             if self.next_tilemap_loc == self.MAIN_TILE_MAP_LOC:
                 self.player.move(self.player.velocity)
                 self.changing_rooms = False
@@ -184,16 +206,17 @@ class Game:
                 self.next_tilemap_loc = None
                 self.tilemap_velocity = (0, 0)
 
-    def render_info_screen(self):
+    def render_info_screen(self) -> None:
         self.screen.blit(self.info_screen, self.INFO_VIEW_LOC)
 
-    def render_tilemap(self):
+    def render_tilemap(self) -> None:
         self.screen.blit(self.tilemap.image, self.tilemap_loc)
 
-    def render_next_tilemap(self):
-        self.screen.blit(self.next_tilemap.image, self.next_tilemap_loc)
+    def render_next_tilemap(self) -> None:
+        if self.next_tilemap and self.next_tilemap_loc:
+            self.screen.blit(self.next_tilemap.image, self.next_tilemap_loc)
 
-    def render_over_player_previous_position(self):
+    def render_over_player_previous_position(self) -> None:
         if self.player_previous_rect:
             self.player_previous_rect.y += self.MAIN_TILE_MAP_OFFSET
             self.screen.blit(
@@ -204,21 +227,20 @@ class Game:
                 ),
                 area=self.player_previous_rect,
             )
-            print(self.player_previous_rect.x, self.player_previous_rect.y)
 
-    def run(self):
+    def run(self) -> None:
+        room_index = self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
         self.tilemap.set_room(
-            self.overworld_rooms[
-                self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
-            ],
-            self.overworld_rooms_collision_data[
-                self.current_room[0] * OVERWORLD_COLS + self.current_room[1]
-            ],
-            convert_tile_reference=hex_reference_to_integer,
+            self.overworld_rooms[room_index],
+            self.overworld_rooms_collision_data[room_index],
+            convert_tile_reference=hex_reference_to_integer_from_int,
         )
         self.render_tilemap()
         self.render_info_screen()
-        pygame.mixer.music.play(-1)
+
+        if os.path.exists(overworld_music_file):
+            pygame.mixer.music.play(-1)
+
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -237,7 +259,7 @@ class Game:
             self.clock.tick(FPS)
         pygame.quit()
 
-    def update_display(self):
+    def update_display(self) -> None:
         if self.next_tilemap:
             self.render_tilemap()
             self.render_next_tilemap()
@@ -246,5 +268,6 @@ class Game:
         pygame.display.update()
 
 
-game = Game()
-game.run()
+if __name__ == "__main__":
+    game = Game()
+    game.run()
